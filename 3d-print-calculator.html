@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRINTFORGE — حاسبة التكلفة وإدارة المخزون</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #555555;
+    --bg2:       #ffffff;
+    --bg3:       #007ff0;
+    --border:    #ffffff;
+    --border2:   #555555;
+    --accent:    #007ff0;
+    --accent2:   #555555;
+    --accent-dim:#007ff0;
+    --ok:        #2dcc7a;
+    --warn:      #f5c842;
+    --danger:    #e8365d;
+    --text:      #ffffff;
+    --text2:     #007ff0;
+    --text3:     #ffffff;
+    --mono:      'Share Tech Mono', monospace;
+    --head:      'Cairo', sans-serif;
+    --body:      'Cairo', sans-serif;
+    --radius:    6px;
+    --transition: 0.18s ease;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+.field input::placeholder {
+  color: #ffffff; 
+  opacity: 0.6; /* لتخفيف درجة اللون قليلاً لتمييزه عن النص الأساسي */
+}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 14px;
+    min-height: 100vh;
+    /* subtle grid texture */
+    background-image:
+      linear-gradient(rgba(255,107,26,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,107,26,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* ── TOP NAV ─────────────────────────────────── */
+  #topbar {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: stretch;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    height: 56px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 24px;
+    border-left: 1px solid var(--border);
+    font-family: var(--head);
+    font-weight: 900;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .brand span { color: var(--text2); font-weight: 300; font-size: 12px; letter-spacing: 1px; }
+  .brand-icon {
+    width: 28px; height: 28px;
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  nav { display: flex; gap: 2px; padding: 8px 16px; align-items: center; }
+  nav button {
+    background: none; border: none; cursor: pointer;
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text2);
+    padding: 6px 18px;
+    border-radius: var(--radius);
+    transition: color var(--transition), background var(--transition);
+    position: relative;
+  }
+  nav button::after {
+    content: '';
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 0; height: 2px;
+    background: var(--accent);
+    transition: width var(--transition);
+    border-radius: 2px;
+  }
+  nav button:hover { color: var(--text); }
+  nav button.active { color: var(--accent); }
+  nav button.active::after { width: 60%; }
+
+  /* ── LAYOUT ──────────────────────────────────── */
+  .page { display: none; padding: 32px 24px; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .page-title {
+    font-family: var(--head);
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+  .page-title span { color: var(--accent); }
+  .page-subtitle { color: var(--text2); font-size: 14px; letter-spacing: 0px; margin-bottom: 32px; font-family: var(--head); }
+
+  .section-divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 36px 0 24px;
+  }
+  .section-divider h2 {
+    font-family: var(--head);
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text2);
+    white-space: nowrap;
+  }
+  .section-divider::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--border);
+  }
+  .section-divider .tag {
+    background: var(--accent-dim);
+    color: var(--accent2);
+    font-family: var(--head);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+
+  /* ── CARDS / PANELS ──────────────────────────── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+  }
+  .card-title {
+    font-family: var(--head);
+    font-size: 16px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text2);
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-title::before {
+    content: '';
+    width: 3px; height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* ── FORMS ───────────────────────────────────── */
+  .form-grid { display: grid; gap: 14px; }
+  .form-grid-2 { grid-template-columns: 1fr 1fr; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  @media (max-width: 700px) {
+    .form-grid-2, .form-grid-3, .form-grid-4 { grid-template-columns: 1fr; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-family: var(--head); font-weight: 700;
+    font-size: 13px; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text2);
+  }
+  .field input, .field select {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    width: 100%;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255,107,26,0.12);
+  }
+  .field select option { background: var(--bg3); }
+  .field input[type="checkbox"] {
+    width: auto; cursor: pointer;
+    accent-color: var(--accent);
+  }
+  .checkbox-row {
+    display: flex; align-items: center; gap: 10px;
+    flex-direction: row;
+  }
+  .checkbox-row label { font-family: var(--head); font-weight: 600; font-size: 14px; letter-spacing: 0px; color: var(--text); cursor: pointer; }
+
+  /* ── BUTTONS ─────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--head);
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 10px 22px;
+    border-radius: var(--radius);
+    border: none; cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0f12;
+    box-shadow: 0 2px 12px rgba(255,107,26,0.3);
+  }
+  .btn-primary:hover {
+    background: var(--accent2);
+    box-shadow: 0 4px 20px rgba(255,107,26,0.5);
+    transform: translateY(-1px);
+    color: #ffffff;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid transparent;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .btn-danger:hover { background: rgba(232,54,93,0.12); border-color: var(--danger); }
+  .btn-ok {
+    background: var(--ok);
+    color: #0d0f12;
+  }
+  .btn-ok:hover { filter: brightness(1.15); }
+  .btn-big {
+    padding: 14px 36px;
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+
+  /* ── SPOOL GRID ──────────────────────────────── */
+  .spool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .spool-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 16px 14px;
+    position: relative;
+    transition: border-color var(--transition);
+  }
+  .spool-card:hover { border-color: var(--border2); }
+  .spool-name {
+    font-family: var(--head);
+    font-size: 16px; font-weight: 700; letter-spacing: 0px;
+    color: var(--text);
+    margin-bottom: 10px;
+    padding-left: 28px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .spool-stat { font-family: var(--head); font-weight: 600; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .spool-stat span { color: var(--text); font-family: var(--mono); }
+  .spool-grams {
+    font-family: var(--head);
+    font-size: 28px; font-weight: 900;
+    letter-spacing: 1px;
+    margin-top: 6px;
+  }
+  .spool-grams.ok { color: var(--ok); }
+  .spool-grams.warn { color: var(--warn); }
+  .spool-grams.empty { color: var(--danger); }
+  .spool-bar-bg {
+    height: 4px; background: var(--border);
+    border-radius: 2px; margin-top: 10px; overflow: hidden;
+  }
+  .spool-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .spool-del {
+    position: absolute; top: 10px; left: 10px;
+  }
+
+  /* ── STASH LIST ──────────────────────────────── */
+  .stash-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .stash-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    transition: border-color var(--transition);
+  }
+  .stash-item:hover { border-color: var(--border2); }
+  .stash-item-name { font-weight: 600; color: var(--text); font-family: var(--head); font-size: 15px;}
+  .stash-item-qty {
+    font-family: var(--head); font-weight: 700;
+    font-size: 13px; color: var(--text2);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 8px;
+  }
+  .stash-item-actions { display: flex; align-items: center; gap: 8px; }
+
+  /* ── PRINTER LIST ────────────────────────────── */
+  .printer-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .printer-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+  }
+  .printer-item-name {
+    font-family: var(--head);
+    font-size: 18px; font-weight: 700; letter-spacing: 0px; color: var(--text);
+  }
+  .printer-meta { display: flex; gap: 16px; margin-top: 4px; }
+  .printer-meta-item { font-family: var(--head); font-weight: 600; font-size: 12px; color: var(--text2); }
+  .printer-meta-item span { color: var(--accent2); font-family: var(--mono); }
+
+  /* ── SETTINGS GRID ───────────────────────────── */
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
+
+  /* ── INVOICE ─────────────────────────────────── */
+  #invoice-section {
+    margin-top: 36px;
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+  }
+  #invoice-section.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
+
+  .invoice-box {
+    background: var(--bg2);
+    border: 1px solid var(--accent-dim);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(255,107,26,0.08);
+  }
+  .invoice-header {
+    background: linear-gradient(135deg, var(--accent-dim) 0%, rgba(122,46,0,0.4) 100%);
+    padding: 20px 28px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--accent-dim);
+  }
+  .invoice-title {
+    font-family: var(--head);
+    font-size: 24px; font-weight: 900; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .invoice-subtitle { font-family: var(--mono); font-size: 12px; color: var(--accent2); margin-top: 2px; }
+  .invoice-stamp {
+    font-family: var(--head); font-weight: 700; font-size: 14px;
+    color: var(--accent2);
+    text-align: left;
+  }
+  .invoice-lines { padding: 0 28px; }
+  .invoice-line {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .invoice-line:last-child { border-bottom: none; }
+  .invoice-line-label { color: var(--text2); font-family: var(--head); font-weight: 600; font-size: 14px; }
+  .invoice-line-value { font-family: var(--mono); font-size: 14px; color: var(--text); }
+  .invoice-line.subtotal .invoice-line-label { color: var(--text); font-weight: 800; font-size: 16px; }
+  .invoice-line.total-line {
+    background: rgba(255,107,26,0.05);
+    margin: 0 -28px; padding: 18px 28px;
+  }
+  .invoice-line.total-line .invoice-line-label {
+    font-family: var(--head);
+    font-size: 20px; font-weight: 900; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .invoice-line.total-line .invoice-line-value {
+    font-family: var(--mono);
+    font-size: 28px; font-weight: 900; color: var(--accent);
+  }
+  .invoice-note {
+    padding: 14px 28px;
+    font-family: var(--head); font-weight: 600; font-size: 13px;
+    color: var(--ok);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .invoice-note::before { content: '✓'; }
+
+  /* ── TOAST ───────────────────────────────────── */
+  #toast {
+    position: fixed; bottom: 24px; left: 24px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-family: var(--head); font-weight: 700;
+    font-size: 14px; letter-spacing: 0px;
+    color: var(--ok);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    transform: translateY(80px); opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 9999;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── EMPTY STATES ────────────────────────────── */
+  .empty-state {
+    text-align: center; padding: 32px 16px;
+    color: var(--text3);
+    font-family: var(--head); font-weight: 600; font-size: 14px;
+    letter-spacing: 0px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+  .empty-state::before { content: '[ '; font-family: var(--mono); }
+  .empty-state::after  { content: ' ]'; font-family: var(--mono); }
+
+  /* ── BADGES ──────────────────────────────────── */
+  .badge {
+    font-family: var(--head); font-size: 11px; font-weight: 700;
+    letter-spacing: 0px; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 3px;
+    vertical-align: middle;
+  }
+  .badge-accent { background: var(--accent-dim); color: var(--accent2); }
+  .badge-ok     { background: rgba(45,204,122,0.15); color: var(--ok); }
+  .badge-warn   { background: rgba(245,200,66,0.15); color: var(--warn); }
+  .badge-danger { background: rgba(232,54,93,0.15); color: var(--danger); }
+
+  /* ── MISC ────────────────────────────────────── */
+  .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .row .field { flex: 1; min-width: 140px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  .hint { font-family: var(--head); font-weight: 600; font-size: 11px; color: var(--text3); margin-top: 4px; letter-spacing: 0px; }
+
+/* إخفاء الأسهم من حقول الأرقام في متصفحات كروم وسفاري وإيدج */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+/* إخفاء الأسهم من حقول الأرقام في متصفح فايرفوكس */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">
+    <div>⬡</div>
+    Tabaqa 3D
+  </div>
+  <nav>
+    <button onclick="showPage('calc')" id="nav-calc" class="active">الحاسبة</button>
+    <button onclick="showPage('stash')" id="nav-stash">المخزون</button>
+    <button onclick="showPage('settings')" id="nav-settings">الإعدادات</button>
+  </nav>
+</div>
+
+<div id="page-calc" class="page active">
+  <div class="page-title">حاسبة <span>التكلفة</span></div>
+ <br>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">معلومات الطلب</div>
+      <div class="form-grid form-grid-2" style="margin-bottom:14px">
+        <div class="field">
+          <label>الوزن بالغرام</label>
+          <input type="number" id="c-grams" min="0" step="0.1" placeholder="مثال: 85" >
+        </div>
+        <div class="field">
+          <label>وزن الفشل بالغرام</label>
+          <input type="number" id="c-failed" min="0" step="0.1" placeholder="مثال: 12" value="0">
+        </div>
+        <div class="field">
+          <label>البلاستيك المستخدم</label>
+          <select id="c-spool"></select>
+        </div>
+        <div class="field">
+          <label>الطابعة</label>
+          <select id="c-printer"></select>
+        </div>
+        <div class="field">
+          <label>عدد ساعات الطباعة</label>
+          <input type="number" id="c-phours" min="0" step="0.25" placeholder="مثال: 4.5">
+        </div>
+        <div class="field">
+          <label>ساعات العمل و التصميم</label>
+          <input type="number" id="c-lhours" min="0" step="0.25" placeholder="مثال: 1" value="0">
+        </div>
+        <div class="field">
+          <label>التكاليف الاضافية</label>
+          <input type="number" id="c-other" min="0" step="0.01" placeholder="0.00" value="0">
+        </div>
+        <div class="field">
+          <label>تكلفة اضافية اختيارية</label>
+          <input type="number" id="c-extra" min="0" step="0.01" placeholder="0.00" value="0">
+        </div>
+      </div>
+      <div class="form-grid" style="gap:10px">
+        <div class="checkbox-row">
+          <input type="checkbox" id="c-urgent">
+          <label for="c-urgent" style="color: #000000;">طلب مستعجل</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="c-subtract">
+          <label for="c-subtract" style="color: #000000;">خصم الوزن من المخزون</label>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn btn-primary btn-big" onclick="calculate()" style="color: #ffffff;">⚙  حساب التكلفة</button>
+      </div>
+    </div>
+
+    <div>
+      <div id="invoice-section">
+        <div class="invoice-box">
+          <div class="invoice-header">
+            <div>
+              <div class="invoice-title">فاتورة الطباعة</div>
+              <div class="invoice-subtitle" id="inv-date">—</div>
+            </div>
+            <div class="invoice-stamp" id="inv-printer-stamp">—</div>
+          </div>
+          <div class="invoice-lines" id="invoice-lines"></div>
+          <div class="invoice-note" id="invoice-note" style="display:none"></div>
+        </div>
+      </div>
+      <div id="invoice-placeholder" class="empty-state" style="margin-top:0">املأ الخانات واضغط على حساب لرؤية التفاصيل</div>
+    </div>
+  </div>
+</div>
+
+<div id="page-stash" class="page">
+  <div class="page-title">المخزون</div>
+
+  <div class="section-divider">
+    <h2>بكرات الفيلامينت (الخيوط)</h2>
+    <div class="tag">القسم أ</div>
+  </div>
+  <div class="card">
+    <div class="card-title">إضافة بكرة جديدة</div>
+    <div class="form-grid form-grid-4">
+      <div class="field">
+        <label>اسم البكرة</label>
+        <input type="text" id="s-name" placeholder="مثال: PLA أزرق">
+      </div>
+      <div class="field">
+        <label>السعر لكل كيلوغرام</label>
+        <input type="number" id="s-ppkg" min="0" step="0.01" placeholder="مثال: 15.00">
+      </div>
+      <div class="field">
+        <label>الغرامات المتبقية</label>
+        <input type="number" id="s-grams" min="0" step="1" placeholder="مثال: 1000">
+      </div>
+      <div class="field">
+        <label>وزن البكرة فارغة (غ)</label>
+        <input type="number" id="s-empty" min="0" step="1" placeholder="مثال: 250">
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn btn-primary" onclick="addSpool()">+ إضافة بكرة</button>
+    </div>
+  </div>
+
+  <div id="spool-grid" class="spool-grid"></div>
+
+  <div class="section-divider">
+    <h2>مخزون المتجر</h2>
+    <div class="tag">القسم ب</div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">إضافة عنصر للمتجر</div>
+      <div class="row">
+        <div class="field">
+          <label>اسم العنصر</label>
+          <input type="text" id="st-name" placeholder="مثال: براغي M3 x100">
+        </div>
+        <div class="field" style="max-width:120px">
+          <label>الكمية</label>
+          <input type="number" id="st-qty" min="0" step="1" placeholder="1">
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="addStoreItem()">+ إضافة عنصر</button>
+      </div>
+    </div>
+    <div>
+      <div id="stash-list" class="stash-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-settings" class="page">
+  <div class="page-title">إعدادات <span>النظام</span></div>
+  <div class="page-subtitle">// إعداد الطابعات، التكاليف ومعايير الربح</div>
+
+  <div class="section-divider">
+    <h2>الطابعات</h2>
+    <div class="tag">الأجهزة</div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">تسجيل طابعة</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>اسم الطابعة</label>
+          <input type="text" id="p-name" placeholder="مثال: Ender 3 V3 SE">
+        </div>
+        <div class="form-grid form-grid-2">
+          <div class="field">
+            <label>سعر الشراء</label>
+            <input type="number" id="p-price" min="0" step="0.01" placeholder="مثال: 199.00">
+          </div>
+          <div class="field">
+            <label>التكلفة بالساعة</label>
+            <input type="number" id="p-rate" min="0" step="0.01" placeholder="مثال: 0.15">
+            <div class="hint">الاستهلاك / ساعة</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="addPrinter()">+ تسجيل طابعة</button>
+      </div>
+    </div>
+    <div>
+      <div id="printer-list" class="printer-list"></div>
+    </div>
+  </div>
+
+  <div class="section-divider">
+    <h2>معايير التكلفة</h2>
+    <div class="tag">عام</div>
+  </div>
+  <div class="card">
+    <div class="card-title">إعدادات التسعير والربح</div>
+    <div class="settings-grid">
+      <div class="field">
+        <label>سعر الكهرباء لكل ساعة</label>
+        <input type="number" id="cfg-elec" min="0" step="0.001" placeholder="مثال: 0.12">
+        <div class="hint">لكل ساعة طباعة</div>
+      </div>
+      <div class="field">
+        <label>سعر الجهد (العمل) لكل ساعة</label>
+        <input type="number" id="cfg-labor" min="0" step="0.01" placeholder="مثال: 15.00">
+      </div>
+      <div class="field">
+        <label>الربح لكل غرام</label>
+        <input type="number" id="cfg-pgram" min="0" step="0.001" placeholder="مثال: 0.05">
+      </div>
+      <div class="field">
+        <label>الربح لكل ساعة طباعة</label>
+        <input type="number" id="cfg-phour" min="0" step="0.01" placeholder="مثال: 2.00">
+      </div>
+      <div class="field">
+        <label>رسوم الطباعة المستعجلة</label>
+        <input type="number" id="cfg-urgent" min="0" step="0.01" placeholder="مثال: 10.00">
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <button class="btn btn-ok" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ────────────────────────────────────────────
+//  STATE
+// ────────────────────────────────────────────
+const DEFAULT_STATE = {
+  spools: [],
+  storeStash: [],
+  printers: [
+    { id: uid(), name: 'Ender 3 V3 SE', purchasePrice: 199, hourlyRate: 0.15 }
+  ],
+  settings: {
+    electricityPricePerHour: 0.10,
+    laborPricePerHour: 12.00,
+    profitPerGram: 0.04,
+    profitPerHour: 1.50,
+    urgentFee: 8.00
+  }
+};
+
+let state = loadState();
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('printforge_v1');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+function saveState() {
+  localStorage.setItem('printforge_v1', JSON.stringify(state));
+}
+
+// ────────────────────────────────────────────
+//  NAVIGATION
+// ────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  if (id === 'stash') renderStash();
+  if (id === 'settings') renderSettings();
+  if (id === 'calc') populateDropdowns();
+}
+
+// ────────────────────────────────────────────
+//  TOAST
+// ────────────────────────────────────────────
+let toastTimer;
+function toast(msg, color = 'var(--ok)') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.color = color;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ────────────────────────────────────────────
+//  STASH — SPOOLS
+// ────────────────────────────────────────────
+function addSpool() {
+  const name  = val('s-name');
+  const ppkg  = parseFloat(val('s-ppkg'));
+  const grams = parseFloat(val('s-grams'));
+  const empty = parseFloat(val('s-empty')) || 0;
+
+  if (!name || isNaN(ppkg) || isNaN(grams)) {
+    toast('يرجى تعبئة الاسم، السعر لكل كيلوغرام، والغرامات المتبقية', 'var(--warn)'); return;
+  }
+  state.spools.push({ id: uid(), name, pricePerKg: ppkg, gramsLeft: grams, emptySpoolWeight: empty });
+  saveState();
+  clearInputs(['s-name','s-ppkg','s-grams','s-empty']);
+  renderSpools();
+  populateDropdowns();
+  toast('✓ تمت إضافة البكرة');
+}
+
+function deleteSpool(id) {
+  state.spools = state.spools.filter(s => s.id !== id);
+  saveState();
+  renderSpools();
+  populateDropdowns();
+  toast('تمت إزالة البكرة', 'var(--warn)');
+}
+
+function renderSpools() {
+  const grid = document.getElementById('spool-grid');
+  if (!state.spools.length) {
+    grid.innerHTML = '<div class="empty-state">لا توجد بكرات مسجلة بعد</div>';
+    return;
+  }
+  grid.innerHTML = state.spools.map(spool => {
+    const maxG = spool.gramsLeft + spool.emptySpoolWeight;
+    const fillable = spool.gramsLeft + (spool.emptySpoolWeight || 0);
+    const pct = maxG > 0 ? Math.max(0, Math.min(100, (spool.gramsLeft / (maxG - (spool.emptySpoolWeight||0) || maxG)) * 100)) : 0;
+    const rawPct = spool.gramsLeft <= 0 ? 0 : Math.min(100, (spool.gramsLeft / 1000) * 100);
+    let cls = 'ok', barColor = 'var(--ok)';
+    if (spool.gramsLeft <= 0) { cls = 'empty'; barColor = 'var(--danger)'; }
+    else if (spool.gramsLeft < 200) { cls = 'warn'; barColor = 'var(--warn)'; }
+    const ppg = (spool.pricePerKg / 1000).toFixed(4);
+    return `
+      <div class="spool-card">
+        <div class="spool-name">${esc(spool.name)}</div>
+        <div class="spool-stat">السعر/كغ: <span>${fmt(spool.pricePerKg)}</span></div>
+        <div class="spool-stat">السعر/غ: <span>${ppg}</span></div>
+        <div class="spool-stat">البكرة فارغة: <span>${spool.emptySpoolWeight}g</span></div>
+        <div class="spool-grams ${cls}">${spool.gramsLeft}g</div>
+        <div class="spool-bar-bg">
+          <div class="spool-bar-fill" style="width:${rawPct}%;background:${barColor}"></div>
+        </div>
+        <button class="btn btn-danger spool-del" onclick="deleteSpool('${spool.id}')">✕</button>
+      </div>`;
+  }).join('');
+}
+
+// ────────────────────────────────────────────
+//  STASH — STORE ITEMS
+// ────────────────────────────────────────────
+function addStoreItem() {
+  const name = val('st-name');
+  const qty  = parseInt(val('st-qty')) || 1;
+  if (!name) { toast('أدخل اسم العنصر', 'var(--warn)'); return; }
+  state.storeStash.push({ id: uid(), itemName: name, quantity: qty });
+  saveState();
+  clearInputs(['st-name','st-qty']);
+  renderStoreStash();
+  toast('✓ تمت إضافة العنصر للمخزون');
+}
+
+function deleteStoreItem(id) {
+  state.storeStash = state.storeStash.filter(i => i.id !== id);
+  saveState();
+  renderStoreStash();
+  toast('تمت إزالة العنصر', 'var(--warn)');
+}
+
+function updateStoreItemQty(id, amount) {
+  const item = state.storeStash.find(i => i.id === id);
+  if (item) {
+    item.quantity += amount;
+    // منع الكمية من النزول تحت الصفر
+    if (item.quantity < 0) item.quantity = 0; 
+    saveState();
+    renderStoreStash();
+  }
+}
+
+function renderStoreStash() {
+  const el = document.getElementById('stash-list');
+  if (!state.storeStash.length) {
+    el.innerHTML = '<div class="empty-state">مخزون المتجر فارغ</div>';
+    return;
+  }
+  el.innerHTML = state.storeStash.map(item => `
+    <div class="stash-item">
+      <div>
+        <div class="stash-item-name">${esc(item.itemName)}</div>
+      </div>
+      <div class="stash-item-actions">
+        <button class="btn btn-ghost" style="padding: 2px 8px; font-size: 16px; min-width: 30px;" onclick="updateStoreItemQty('${item.id}', -1)">-</button>
+        
+        <span class="stash-item-qty">الكمية: ${item.quantity}</span>
+        
+        <button class="btn btn-ghost" style="padding: 2px 8px; font-size: 14px; min-width: 30px;" onclick="updateStoreItemQty('${item.id}', 1)">+</button>
+        
+        <button class="btn btn-danger" onclick="deleteStoreItem('${item.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+function renderStash() { renderSpools(); renderStoreStash(); }
+
+// ────────────────────────────────────────────
+//  SETTINGS — PRINTERS
+// ────────────────────────────────────────────
+function addPrinter() {
+  const name  = val('p-name');
+  const price = parseFloat(val('p-price')) || 0;
+  const rate  = parseFloat(val('p-rate')) || 0;
+  if (!name) { toast('أدخل اسم الطابعة', 'var(--warn)'); return; }
+  state.printers.push({ id: uid(), name, purchasePrice: price, hourlyRate: rate });
+  saveState();
+  clearInputs(['p-name','p-price','p-rate']);
+  renderPrinters();
+  populateDropdowns();
+  toast('✓ تم تسجيل الطابعة');
+}
+
+function deletePrinter(id) {
+  state.printers = state.printers.filter(p => p.id !== id);
+  saveState();
+  renderPrinters();
+  populateDropdowns();
+  toast('تمت إزالة الطابعة', 'var(--warn)');
+}
+
+function renderPrinters() {
+  const el = document.getElementById('printer-list');
+  if (!state.printers.length) {
+    el.innerHTML = '<div class="empty-state">لا توجد طابعات مسجلة</div>';
+    return;
+  }
+  el.innerHTML = state.printers.map(p => `
+    <div class="printer-item">
+      <div>
+        <div class="printer-item-name">${esc(p.name)}</div>
+        <div class="printer-meta">
+          <div class="printer-meta-item">الشراء: <span>${fmt(p.purchasePrice)}</span></div>
+          <div class="printer-meta-item">التكلفة: <span>${fmt(p.hourlyRate)}/ساعة</span></div>
+        </div>
+      </div>
+      <button class="btn btn-danger" onclick="deletePrinter('${p.id}')">✕ إزالة</button>
+    </div>`).join('');
+}
+
+// ────────────────────────────────────────────
+//  SETTINGS — GLOBAL
+// ────────────────────────────────────────────
+function loadSettingsForm() {
+  const s = state.settings;
+  setVal('cfg-elec',   s.electricityPricePerHour);
+  setVal('cfg-labor',  s.laborPricePerHour);
+  setVal('cfg-pgram',  s.profitPerGram);
+  setVal('cfg-phour',  s.profitPerHour);
+  setVal('cfg-urgent', s.urgentFee);
+}
+
+function saveSettings() {
+  state.settings = {
+    electricityPricePerHour: parseFloat(val('cfg-elec'))  || 0,
+    laborPricePerHour:       parseFloat(val('cfg-labor')) || 0,
+    profitPerGram:           parseFloat(val('cfg-pgram')) || 0,
+    profitPerHour:           parseFloat(val('cfg-phour')) || 0,
+    urgentFee:               parseFloat(val('cfg-urgent'))|| 0,
+  };
+  saveState();
+  toast('✓ تم حفظ الإعدادات');
+}
+
+function renderSettings() {
+  loadSettingsForm();
+  renderPrinters();
+}
+
+// ────────────────────────────────────────────
+//  CALCULATOR — DROPDOWNS
+// ────────────────────────────────────────────
+function populateDropdowns() {
+  const spoolSel   = document.getElementById('c-spool');
+  const printerSel = document.getElementById('c-printer');
+
+  const spoolVal   = spoolSel.value;
+  const printerVal = printerSel.value;
+
+  spoolSel.innerHTML = state.spools.length
+    ? state.spools.map(s => `<option value="${s.id}" ${s.id===spoolVal?'selected':''}>${esc(s.name)} (${s.gramsLeft}g متبقي)</option>`).join('')
+    : '<option value="">— لا توجد بكرات مسجلة —</option>';
+
+  printerSel.innerHTML = state.printers.length
+    ? state.printers.map(p => `<option value="${p.id}" ${p.id===printerVal?'selected':''}>${esc(p.name)}</option>`).join('')
+    : '<option value="">— لا توجد طابعات مسجلة —</option>';
+}
+
+// ────────────────────────────────────────────
+//  CALCULATOR — CORE
+// ────────────────────────────────────────────
+function calculate() {
+  const printG  = parseFloat(val('c-grams'))  || 0;
+  const failedG = parseFloat(val('c-failed')) || 0;
+  const pHours  = parseFloat(val('c-phours')) || 0;
+  const lHours  = parseFloat(val('c-lhours')) || 0;
+  const otherC  = parseFloat(val('c-other'))  || 0;
+  const extraF  = parseFloat(val('c-extra'))  || 0;
+  const urgent  = document.getElementById('c-urgent').checked;
+  const subtractGrams = document.getElementById('c-subtract').checked;
+  const spoolId   = document.getElementById('c-spool').value;
+  const printerId = document.getElementById('c-printer').value;
+
+  if (!printG && !failedG) { toast('أدخل غرامات الطباعة أو الفشل', 'var(--warn)'); return; }
+  if (!spoolId)  { toast('أضف بكرة في المخزون أولاً', 'var(--warn)'); return; }
+  if (!printerId){ toast('أضف طابعة في الإعدادات أولاً', 'var(--warn)'); return; }
+
+  const spool   = state.spools.find(s => s.id === spoolId);
+  const printer = state.printers.find(p => p.id === printerId);
+  const cfg     = state.settings;
+
+  const totalGrams     = printG + failedG;
+  const ppg            = spool.pricePerKg / 1000;
+  const plasticCost    = totalGrams * ppg;
+  const elecCost       = pHours * cfg.electricityPricePerHour;
+  const printerCost    = pHours * printer.hourlyRate;
+  const laborCost      = lHours * cfg.laborPricePerHour;
+  const profitMargin   = (totalGrams * cfg.profitPerGram) + (pHours * cfg.profitPerHour);
+  const urgentCost     = urgent ? cfg.urgentFee : 0;
+  const grandTotal     = plasticCost + elecCost + printerCost + laborCost + otherC + urgentCost + extraF + profitMargin;
+
+  // SUBTRACT FROM STASH
+  let noteMsg = '';
+  if (subtractGrams) {
+    const idx = state.spools.findIndex(s => s.id === spoolId);
+    if (idx >= 0) {
+      state.spools[idx].gramsLeft -= totalGrams;
+      saveState();
+      renderSpools();
+      populateDropdowns();
+      const remaining = state.spools[idx].gramsLeft;
+      noteMsg = remaining < 0
+        ? `⚠ البكرة "${spool.name}" نفدت (${remaining}g). يرجى إعادة التزويد!`
+        : `تم خصم ${totalGrams}g من "${spool.name}" — متبقي ${remaining}g`;
+    }
+  }
+
+  // RENDER INVOICE
+  const lines = [
+    { label: 'إجمالي الغرامات',            value: `${totalGrams}g`,          sub: true },
+    { label: 'تكلفة البلاستيك',            value: `${ppg.toFixed(4)} / غ × ${totalGrams}g`, amount: plasticCost },
+    { label: 'تكلفة الكهرباء',        value: `${fmt(cfg.electricityPricePerHour)} / ساعة × ${pHours}س`, amount: elecCost },
+    { label: `الطابعة: ${printer.name}`,value: `${fmt(printer.hourlyRate)} / ساعة × ${pHours}س`, amount: printerCost },
+    { label: 'تكلفة الجهد',              value: `${fmt(cfg.laborPricePerHour)} / ساعة × ${lHours}س`, amount: laborCost },
+    { label: 'مواد أخرى',         value: '—', amount: otherC },
+    { label: 'رسوم الاستعجال',             value: urgent ? 'مُطبقة' : 'لا يوجد', amount: urgentCost, skip: !urgent && urgentCost===0 },
+    { label: 'رسوم إضافية',               value: extraF>0 ? '—' : 'لا يوجد', amount: extraF, skip: extraF===0 },
+    { label: 'هامش الربح',           value: `${totalGrams}g × ${fmt(cfg.profitPerGram)} + ${pHours}س × ${fmt(cfg.profitPerHour)}`, amount: profitMargin },
+  ];
+
+  const now = new Date();
+  document.getElementById('inv-date').textContent =
+    now.toLocaleDateString('ar-JO', {day:'2-digit',month:'short',year:'numeric'}) + ' · ' +
+    now.toLocaleTimeString('ar-JO', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('inv-printer-stamp').innerHTML =
+    `${esc(printer.name)}<br><span style="color:var(--accent)">⬡ ${esc(spool.name)}</span>`;
+
+  const linesHTML = lines.filter(l => !l.skip).map(l => {
+    if (l.sub) return `
+      <div class="invoice-line subtotal">
+        <div class="invoice-line-label">${l.label}</div>
+        <div class="invoice-line-value">${l.value}</div>
+      </div>`;
+    return `
+      <div class="invoice-line">
+        <div class="invoice-line-label">${l.label} <span style="color:var(--text3);font-size:10px">${l.value}</span></div>
+        <div class="invoice-line-value">${fmt(l.amount)}</div>
+      </div>`;
+  }).join('');
+
+  const totalLine = `
+    <div class="invoice-line total-line">
+      <div class="invoice-line-label">المجموع الكلي</div>
+      <div class="invoice-line-value">${fmt(grandTotal)}</div>
+    </div>`;
+
+  document.getElementById('invoice-lines').innerHTML = linesHTML + totalLine;
+
+  const noteEl = document.getElementById('invoice-note');
+  if (noteMsg) {
+    noteEl.textContent = noteMsg;
+    noteEl.style.display = '';
+    noteEl.style.color = noteMsg.includes('⚠') ? 'var(--warn)' : 'var(--ok)';
+  } else {
+    noteEl.style.display = 'none';
+  }
+
+  document.getElementById('invoice-section').classList.add('visible');
+  document.getElementById('invoice-placeholder').style.display = 'none';
+  toast('✓ اكتمل الحساب');
+}
+
+// ────────────────────────────────────────────
+//  HELPERS
+// ────────────────────────────────────────────
+function val(id) { return document.getElementById(id).value.trim(); }
+function setVal(id, v) { document.getElementById(id).value = v ?? ''; }
+function clearInputs(ids) { ids.forEach(id => setVal(id, '')); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Currency formatter — uses generic format, will look nice without a fixed locale currency symbol
+function fmt(n) {
+  const abs = Math.abs(+n || 0).toFixed(2);
+  return (n < 0 ? '-' : '') + abs;
+}
+
+// ────────────────────────────────────────────
+//  BOOT
+// ────────────────────────────────────────────
+(function init() {
+  populateDropdowns();
+  // Pre-render stash/settings if user lands on those
+  renderSpools();
+  renderStoreStash();
+  loadSettingsForm();
+  renderPrinters();
+})();
+</script>
+</body>
+</html>
