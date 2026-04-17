@@ -2,8 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRINTFORGE — حاسبة التكلفة وإدارة المخزون</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Tabaqa 3D — حاسبة التكلفة وإدارة المخزون</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
@@ -27,441 +29,381 @@
     --body:      'Cairo', sans-serif;
     --radius:    6px;
     --transition: 0.18s ease;
+    /* Mobile safe areas */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
-  html { scroll-behavior: smooth; }
+  .field input::placeholder {
+    color: #ffffff;
+    opacity: 0.6;
+  }
 
-.field input::placeholder {
-  color: #ffffff; 
-  opacity: 0.6; /* لتخفيف درجة اللون قليلاً لتمييزه عن النص الأساسي */
-}
   body {
     background: var(--bg);
     color: var(--text);
     font-family: var(--body);
     font-size: 14px;
     min-height: 100vh;
-    /* subtle grid texture */
+    min-height: -webkit-fill-available;
     background-image:
       linear-gradient(rgba(255,107,26,0.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255,107,26,0.03) 1px, transparent 1px);
     background-size: 40px 40px;
+    /* bottom nav padding */
+    padding-bottom: calc(64px + var(--safe-bottom));
   }
 
-  /* ── TOP NAV ─────────────────────────────────── */
+  /* ── TOP BAR ─────────────────────────────────── */
   #topbar {
     position: sticky; top: 0; z-index: 100;
-    display: flex; align-items: stretch;
+    display: flex; align-items: center; justify-content: space-between;
     background: var(--bg2);
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     height: 56px;
+    padding: 0 16px;
+    padding-top: var(--safe-top);
   }
+
   .brand {
-    display: flex; align-items: center; gap: 10px;
-    padding: 0 24px;
-    border-left: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
     font-family: var(--head);
     font-weight: 900;
-    font-size: 20px;
+    font-size: 18px;
     letter-spacing: 1px;
     color: var(--accent);
+    text-transform: uppercase;
     white-space: nowrap;
-    text-transform: uppercase;
   }
-  .brand span { color: var(--text2); font-weight: 300; font-size: 12px; letter-spacing: 1px; }
-  .brand-icon {
-    width: 28px; height: 28px;
-    border: 2px solid var(--accent);
-    border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
+  .brand span { color: var(--text2); font-weight: 300; font-size: 11px; }
+
+  /* Desktop nav — hidden on mobile */
+  nav.desktop-nav {
+    display: flex; gap: 2px; padding: 8px 16px; align-items: center;
   }
-  nav { display: flex; gap: 2px; padding: 8px 16px; align-items: center; }
-  nav button {
+  nav.desktop-nav button {
     background: none; border: none; cursor: pointer;
-    font-family: var(--head);
-    font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text2);
-    padding: 6px 18px;
+    font-family: var(--head); font-weight: 700; font-size: 14px;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text2); padding: 6px 18px;
     border-radius: var(--radius);
     transition: color var(--transition), background var(--transition);
     position: relative;
   }
-  nav button::after {
-    content: '';
-    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 0; height: 2px;
-    background: var(--accent);
-    transition: width var(--transition);
-    border-radius: 2px;
+  nav.desktop-nav button::after {
+    content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 0; height: 2px; background: var(--accent);
+    transition: width var(--transition); border-radius: 2px;
   }
-  nav button:hover { color: var(--text); }
-  nav button.active { color: var(--accent); }
-  nav button.active::after { width: 60%; }
+  nav.desktop-nav button:hover { color: var(--text); }
+  nav.desktop-nav button.active { color: var(--accent); }
+  nav.desktop-nav button.active::after { width: 60%; }
+
+  /* ── BOTTOM MOBILE NAV ──────────────────────── */
+  #bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding-bottom: var(--safe-bottom);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+  }
+  #bottom-nav .nav-inner {
+    display: flex;
+    height: 64px;
+  }
+  #bottom-nav button {
+    flex: 1;
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    font-family: var(--head); font-weight: 700;
+    font-size: 11px; letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    transition: color var(--transition);
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    touch-action: manipulation;
+  }
+  #bottom-nav button .nav-icon { font-size: 22px; line-height: 1; }
+  #bottom-nav button.active { color: var(--accent); }
+  #bottom-nav button.active .nav-icon { transform: scale(1.1); }
 
   /* ── LAYOUT ──────────────────────────────────── */
-  .page { display: none; padding: 32px 24px; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.25s ease; }
+  .page { display: none; padding: 24px 16px; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.25s ease; }
   .page.active { display: block; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   .page-title {
-    font-family: var(--head);
-    font-size: 42px;
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text);
-    margin-bottom: 4px;
-    line-height: 1;
+    font-family: var(--head); font-size: 36px; font-weight: 900;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text); margin-bottom: 4px; line-height: 1;
   }
   .page-title span { color: var(--accent); }
-  .page-subtitle { color: var(--text2); font-size: 14px; letter-spacing: 0px; margin-bottom: 32px; font-family: var(--head); }
+  .page-subtitle { color: var(--text2); font-size: 13px; margin-bottom: 24px; font-family: var(--head); }
 
   .section-divider {
-    display: flex; align-items: center; gap: 16px;
-    margin: 36px 0 24px;
+    display: flex; align-items: center; gap: 12px;
+    margin: 28px 0 18px;
   }
   .section-divider h2 {
-    font-family: var(--head);
-    font-size: 20px; font-weight: 700;
+    font-family: var(--head); font-size: 16px; font-weight: 700;
     letter-spacing: 1px; text-transform: uppercase;
-    color: var(--text2);
-    white-space: nowrap;
+    color: var(--text2); white-space: nowrap;
   }
-  .section-divider::after {
-    content: ''; flex: 1;
-    height: 1px; background: var(--border);
-  }
+  .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .section-divider .tag {
-    background: var(--accent-dim);
-    color: var(--accent2);
-    font-family: var(--head);
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 3px;
-    letter-spacing: 1px;
-    font-weight: 700;
+    background: var(--accent-dim); color: var(--accent2);
+    font-family: var(--head); font-size: 11px;
+    padding: 2px 7px; border-radius: 3px;
+    letter-spacing: 1px; font-weight: 700;
   }
 
-  /* ── CARDS / PANELS ──────────────────────────── */
+  /* ── CARDS ───────────────────────────────────── */
   .card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 24px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px;
   }
   .card-title {
-    font-family: var(--head);
-    font-size: 16px; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--text2);
-    margin-bottom: 18px;
+    font-family: var(--head); font-size: 15px; font-weight: 700;
+    letter-spacing: 0.5px; text-transform: uppercase; color: var(--text2);
+    margin-bottom: 16px;
     display: flex; align-items: center; gap: 10px;
   }
-  .card-title::before {
-    content: '';
-    width: 3px; height: 16px;
-    background: var(--accent);
-    border-radius: 2px;
-  }
+  .card-title::before { content: ''; width: 3px; height: 16px; background: var(--accent); border-radius: 2px; }
 
   /* ── FORMS ───────────────────────────────────── */
-  .form-grid { display: grid; gap: 14px; }
+  .form-grid { display: grid; gap: 12px; }
   .form-grid-2 { grid-template-columns: 1fr 1fr; }
   .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-  .form-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-  @media (max-width: 700px) {
-    .form-grid-2, .form-grid-3, .form-grid-4 { grid-template-columns: 1fr; }
-  }
+  .form-grid-4 { grid-template-columns: 1fr 1fr; } /* 4-col becomes 2 on all screens */
 
-  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
   .field label {
     font-family: var(--head); font-weight: 700;
-    font-size: 13px; letter-spacing: 0.5px;
+    font-size: 12px; letter-spacing: 0.5px;
     text-transform: uppercase; color: var(--text2);
   }
   .field input, .field select {
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 14px;
-    padding: 9px 12px;
-    outline: none;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--text);
+    font-family: var(--mono); font-size: 15px; /* larger for mobile tap */
+    padding: 11px 12px; outline: none;
     transition: border-color var(--transition), box-shadow var(--transition);
     width: 100%;
+    /* prevent iOS zoom on focus */
+    font-size: 16px;
+    -webkit-appearance: none;
+    appearance: none;
   }
   .field input:focus, .field select:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(255,107,26,0.12);
+    box-shadow: 0 0 0 3px rgba(0,127,240,0.15);
   }
   .field select option { background: var(--bg3); }
   .field input[type="checkbox"] {
-    width: auto; cursor: pointer;
-    accent-color: var(--accent);
+    width: 20px; height: 20px; cursor: pointer;
+    accent-color: var(--accent); -webkit-appearance: checkbox; appearance: checkbox;
   }
   .checkbox-row {
-    display: flex; align-items: center; gap: 10px;
-    flex-direction: row;
+    display: flex; align-items: center; gap: 10px; flex-direction: row;
+    padding: 4px 0;
   }
-  .checkbox-row label { font-family: var(--head); font-weight: 600; font-size: 14px; letter-spacing: 0px; color: var(--text); cursor: pointer; }
+  .checkbox-row label {
+    font-family: var(--head); font-weight: 600; font-size: 14px;
+    color: #000000; cursor: pointer;
+  }
 
   /* ── BUTTONS ─────────────────────────────────── */
   .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: var(--head);
-    font-size: 14px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: var(--head); font-size: 14px; font-weight: 700;
     letter-spacing: 1px; text-transform: uppercase;
-    padding: 10px 22px;
-    border-radius: var(--radius);
+    padding: 12px 20px; border-radius: var(--radius);
     border: none; cursor: pointer;
     transition: all var(--transition);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px; /* iOS touch target */
   }
   .btn-primary {
-    background: var(--accent);
-    color: #0d0f12;
-    box-shadow: 0 2px 12px rgba(255,107,26,0.3);
+    background: var(--accent); color: #0d0f12;
+    box-shadow: 0 2px 12px rgba(0,127,240,0.3);
   }
-  .btn-primary:hover {
-    background: var(--accent2);
-    box-shadow: 0 4px 20px rgba(255,107,26,0.5);
-    transform: translateY(-1px);
-    color: #ffffff;
-  }
+  .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
   .btn-ghost {
-    background: transparent;
-    color: var(--text2);
+    background: transparent; color: var(--text2);
     border: 1px solid var(--border2);
   }
-  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-ghost:active { border-color: var(--accent); color: var(--accent); }
   .btn-danger {
-    background: transparent;
-    color: var(--danger);
+    background: transparent; color: var(--danger);
     border: 1px solid transparent;
-    padding: 6px 10px;
-    font-size: 12px;
+    padding: 8px 12px; font-size: 12px; min-height: 36px;
   }
-  .btn-danger:hover { background: rgba(232,54,93,0.12); border-color: var(--danger); }
-  .btn-ok {
-    background: var(--ok);
-    color: #0d0f12;
-  }
-  .btn-ok:hover { filter: brightness(1.15); }
-  .btn-big {
-    padding: 14px 36px;
-    font-size: 16px;
-    letter-spacing: 1px;
-  }
+  .btn-danger:active { background: rgba(232,54,93,0.12); border-color: var(--danger); }
+  .btn-ok { background: var(--ok); color: #0d0f12; }
+  .btn-ok:active { filter: brightness(0.9); }
+  .btn-big { padding: 14px 28px; font-size: 16px; width: 100%; }
+  .btn-full { width: 100%; }
 
-/* تنسيق أزرار الزيادة والنقصان */
-.btn-qty {
-  background: var(--bg2); /* خلفية بيضاء لتكون واضحة */
-  color: var(--text2); /* لون الخط أسود */
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0px 8px;
-  font-family: var(--head);
-  font-size: 18px;
-  font-weight: bold;
-  min-width: 32px;
-  height: 28px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition);
-}
+  .btn-qty {
+    background: var(--bg2); color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 0px 10px;
+    font-family: var(--head); font-size: 20px; font-weight: bold;
+    min-width: 36px; height: 36px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .btn-qty:active { background: var(--accent2); color: #ffffff; border-color: var(--accent2); }
 
-.btn-qty:hover {
-  background: var(--accent2); /* يتغير لونه عند التمرير عليه */
-  color: #ffffff;
-  border-color: var(--accent2);
-}
-  
   /* ── SPOOL GRID ──────────────────────────────── */
   .spool-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 14px;
-    margin-top: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px; margin-top: 16px;
   }
   .spool-card {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 18px 16px 14px;
-    position: relative;
-    transition: border-color var(--transition);
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 14px 12px;
+    position: relative; transition: border-color var(--transition);
   }
-  .spool-card:hover { border-color: var(--border2); }
   .spool-name {
-    font-family: var(--head);
-    font-size: 16px; font-weight: 700; letter-spacing: 0px;
-    color: var(--text);
-    margin-bottom: 10px;
-    padding-left: 28px;
+    font-family: var(--head); font-size: 15px; font-weight: 700;
+    color: var(--text); margin-bottom: 8px; padding-left: 28px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .spool-stat { font-family: var(--head); font-weight: 600; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .spool-stat { font-family: var(--head); font-weight: 600; font-size: 11px; color: var(--text2); margin-bottom: 3px; }
   .spool-stat span { color: var(--text); font-family: var(--mono); }
   .spool-grams {
-    font-family: var(--head);
-    font-size: 28px; font-weight: 900;
-    letter-spacing: 1px;
-    margin-top: 6px;
+    font-family: var(--head); font-size: 24px; font-weight: 900;
+    letter-spacing: 1px; margin-top: 6px;
   }
   .spool-grams.ok { color: var(--ok); }
   .spool-grams.warn { color: var(--warn); }
   .spool-grams.empty { color: var(--danger); }
-  .spool-bar-bg {
-    height: 4px; background: var(--border);
-    border-radius: 2px; margin-top: 10px; overflow: hidden;
-  }
+  .spool-bar-bg { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
   .spool-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
-  .spool-del {
-    position: absolute; top: 10px; left: 10px;
-  }
+  .spool-del { position: absolute; top: 8px; left: 8px; }
 
   /* ── STASH LIST ──────────────────────────────── */
-  .stash-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .stash-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
   .stash-item {
     display: flex; align-items: center; justify-content: space-between;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 16px;
-    transition: border-color var(--transition);
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    gap: 8px;
   }
-  .stash-item:hover { border-color: var(--border2); }
-  .stash-item-name { font-weight: 600; color: var(--text); font-family: var(--head); font-size: 15px;}
+  .stash-item-name { font-weight: 600; color: var(--text); font-family: var(--head); font-size: 14px; flex: 1; }
   .stash-item-qty {
     font-family: var(--head); font-weight: 700;
-    font-size: 13px; color: var(--text2);
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 4px; padding: 2px 8px;
+    font-size: 12px; color: var(--text2);
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 8px; white-space: nowrap;
   }
-  .stash-item-actions { display: flex; align-items: center; gap: 8px; }
+  .stash-item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
   /* ── PRINTER LIST ────────────────────────────── */
-  .printer-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .printer-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
   .printer-item {
     display: flex; align-items: center; justify-content: space-between;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 18px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px; gap: 8px;
   }
   .printer-item-name {
-    font-family: var(--head);
-    font-size: 18px; font-weight: 700; letter-spacing: 0px; color: var(--text);
+    font-family: var(--head); font-size: 16px; font-weight: 700; color: var(--text);
   }
-  .printer-meta { display: flex; gap: 16px; margin-top: 4px; }
-  .printer-meta-item { font-family: var(--head); font-weight: 600; font-size: 12px; color: var(--text2); }
+  .printer-meta { display: flex; gap: 12px; margin-top: 3px; flex-wrap: wrap; }
+  .printer-meta-item { font-family: var(--head); font-weight: 600; font-size: 11px; color: var(--text2); }
   .printer-meta-item span { color: var(--accent2); font-family: var(--mono); }
 
   /* ── SETTINGS GRID ───────────────────────────── */
-  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
   /* ── INVOICE ─────────────────────────────────── */
   #invoice-section {
-    margin-top: 36px;
-    opacity: 0; transform: translateY(12px);
+    margin-top: 20px; opacity: 0; transform: translateY(12px);
     transition: opacity 0.4s ease, transform 0.4s ease;
     pointer-events: none;
   }
   #invoice-section.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
-
   .invoice-box {
-    background: var(--bg2);
-    border: 1px solid var(--accent-dim);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 0 40px rgba(255,107,26,0.08);
+    background: var(--bg2); border: 1px solid var(--accent-dim);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,127,240,0.08);
   }
   .invoice-header {
-    background: linear-gradient(135deg, var(--accent-dim) 0%, rgba(122,46,0,0.4) 100%);
-    padding: 20px 28px;
+    background: linear-gradient(135deg, var(--accent-dim) 0%, rgba(0,80,180,0.4) 100%);
+    padding: 16px 20px;
     display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid var(--accent-dim);
+    border-bottom: 1px solid var(--accent-dim); gap: 12px;
   }
   .invoice-title {
-    font-family: var(--head);
-    font-size: 24px; font-weight: 900; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--accent);
+    font-family: var(--head); font-size: 20px; font-weight: 900;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--accent);
   }
-  .invoice-subtitle { font-family: var(--mono); font-size: 12px; color: var(--accent2); margin-top: 2px; }
+  .invoice-subtitle { font-family: var(--mono); font-size: 11px; color: var(--accent2); margin-top: 2px; }
   .invoice-stamp {
-    font-family: var(--head); font-weight: 700; font-size: 14px;
-    color: var(--accent2);
-    text-align: left;
+    font-family: var(--head); font-weight: 700; font-size: 12px;
+    color: var(--accent2); text-align: left; flex-shrink: 0;
   }
-  .invoice-lines { padding: 0 28px; }
+  .invoice-lines { padding: 0 16px; }
   .invoice-line {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 13px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px; gap: 8px;
   }
   .invoice-line:last-child { border-bottom: none; }
-  .invoice-line-label { color: #007ff0; font-family: var(--head); font-weight: 600; font-size: 14px; }
-  .invoice-line-value { font-family: var(--mono); font-size: 14px; color: #007ff0; }
-  .invoice-line.subtotal .invoice-line-label { color:#007ff0; font-weight: 800; font-size: 16px; }
+  .invoice-line-label { color: #007ff0; font-family: var(--head); font-weight: 600; font-size: 13px; flex: 1; }
+  .invoice-line-value { font-family: var(--mono); font-size: 13px; color: #007ff0; white-space: nowrap; }
+  .invoice-line.subtotal .invoice-line-label { color:#007ff0; font-weight: 800; font-size: 14px; }
   .invoice-line.total-line {
-    background: rgba(255,107,26,0.05);
-    margin: 0 -28px; padding: 18px 28px;
+    background: rgba(0,127,240,0.05);
+    margin: 0 -16px; padding: 16px 16px;
   }
   .invoice-line.total-line .invoice-line-label {
-    font-family: var(--head);
-    font-size: 20px; font-weight: 900; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--accent);
+    font-family: var(--head); font-size: 18px; font-weight: 900;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--accent);
   }
   .invoice-line.total-line .invoice-line-value {
-    font-family: var(--mono);
-    font-size: 28px; font-weight: 900; color: var(--accent);
+    font-family: var(--mono); font-size: 24px; font-weight: 900; color: var(--accent);
   }
   .invoice-note {
-    padding: 14px 28px;
-    font-family: var(--head); font-weight: 600; font-size: 13px;
-    color: var(--ok);
-    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    font-family: var(--head); font-weight: 600; font-size: 12px;
+    color: var(--ok); border-top: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
   }
   .invoice-note::before { content: '✓'; }
 
   /* ── TOAST ───────────────────────────────────── */
   #toast {
-    position: fixed; bottom: 24px; left: 24px;
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    padding: 12px 18px;
-    font-family: var(--head); font-weight: 700;
-    font-size: 14px; letter-spacing: 0px;
-    color: var(--ok);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    position: fixed; bottom: calc(80px + var(--safe-bottom)); left: 16px; right: 16px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 12px 16px;
+    font-family: var(--head); font-weight: 700; font-size: 14px;
+    color: var(--ok); box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     transform: translateY(80px); opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease;
-    z-index: 9999;
+    z-index: 9999; text-align: center;
   }
   #toast.show { transform: translateY(0); opacity: 1; }
 
   /* ── EMPTY STATES ────────────────────────────── */
   .empty-state {
-    text-align: center; padding: 32px 16px;
-    color: var(--text3);
-    font-family: var(--head); font-weight: 600; font-size: 14px;
-    letter-spacing: 0px;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    margin-top: 12px;
+    text-align: center; padding: 24px 12px;
+    color: var(--text3); font-family: var(--head); font-weight: 600; font-size: 13px;
+    border: 1px dashed var(--border); border-radius: 8px; margin-top: 10px;
   }
   .empty-state::before { content: '[ '; font-family: var(--mono); }
   .empty-state::after  { content: ' ]'; font-family: var(--mono); }
@@ -470,61 +412,142 @@
   .badge {
     font-family: var(--head); font-size: 11px; font-weight: 700;
     letter-spacing: 0px; text-transform: uppercase;
-    padding: 2px 6px; border-radius: 3px;
-    vertical-align: middle;
+    padding: 2px 6px; border-radius: 3px; vertical-align: middle;
   }
-  .badge-accent { background: var(--accent-dim); color: var(--accent2); }
   .badge-ok     { background: rgba(45,204,122,0.15); color: var(--ok); }
   .badge-warn   { background: rgba(245,200,66,0.15); color: var(--warn); }
   .badge-danger { background: rgba(232,54,93,0.15); color: var(--danger); }
 
   /* ── MISC ────────────────────────────────────── */
-  .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
-  .row .field { flex: 1; min-width: 140px; }
-  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .row .field { flex: 1; min-width: 120px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .hint { font-family: var(--head); font-weight: 600; font-size: 11px; color: var(--text3); margin-top: 3px; }
 
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+  /* Two-col: side by side on desktop, stacked on mobile */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-  .hint { font-family: var(--head); font-weight: 600; font-size: 11px; color: var(--text3); margin-top: 4px; letter-spacing: 0px; }
+  /* ── REMOVE SPINNERS ────────────────────────── */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
 
-/* إخفاء الأسهم من حقول الأرقام في متصفحات كروم وسفاري وإيدج */
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
-}
+  /* ════════════════════════════════════════════
+     MOBILE BREAKPOINTS
+     ════════════════════════════════════════════ */
+  @media (max-width: 768px) {
 
-/* إخفاء الأسهم من حقول الأرقام في متصفح فايرفوكس */
-input[type=number] {
-  -moz-appearance: textfield;
-}
+    body { font-size: 14px; }
+
+    /* Show bottom nav, hide desktop nav */
+    #bottom-nav { display: block; }
+    nav.desktop-nav { display: none; }
+
+    /* Topbar simplified */
+    #topbar { height: 52px; }
+    .brand { font-size: 16px; }
+
+    /* Page padding */
+    .page { padding: 16px 12px; }
+    .page-title { font-size: 28px; letter-spacing: 1px; }
+    .page-subtitle { font-size: 12px; margin-bottom: 16px; }
+
+    /* All grid layouts → single column on small screens */
+    .two-col { grid-template-columns: 1fr; gap: 14px; }
+    .form-grid-2 { grid-template-columns: 1fr 1fr; } /* keep 2-col for small pairs */
+    .form-grid-3 { grid-template-columns: 1fr 1fr; }
+    .form-grid-4 { grid-template-columns: 1fr 1fr; }
+    .settings-grid { grid-template-columns: 1fr; }
+
+    /* Cards */
+    .card { padding: 14px; }
+    .card-title { font-size: 13px; margin-bottom: 12px; }
+
+    /* Spool grid: 2 columns on mobile */
+    .spool-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .spool-name { font-size: 13px; }
+    .spool-grams { font-size: 20px; }
+
+    /* Stash item: allow wrapping */
+    .stash-item { flex-wrap: wrap; gap: 8px; }
+    .stash-item-name { flex-basis: 100%; }
+    .stash-item-actions { width: 100%; justify-content: flex-end; }
+
+    /* Invoice */
+    .invoice-header { flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 14px; }
+    .invoice-title { font-size: 17px; }
+    .invoice-stamp { font-size: 11px; }
+    .invoice-lines { padding: 0 12px; }
+    .invoice-line { padding: 10px 0; }
+    .invoice-line-label { font-size: 12px; }
+    .invoice-line-value { font-size: 12px; }
+    .invoice-line.total-line .invoice-line-label { font-size: 15px; }
+    .invoice-line.total-line .invoice-line-value { font-size: 20px; }
+    .invoice-line.total-line { margin: 0 -12px; padding: 14px 12px; }
+
+    /* Printer item */
+    .printer-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .printer-item .btn { align-self: flex-end; }
+
+    /* Section divider */
+    .section-divider { margin: 20px 0 14px; }
+    .section-divider h2 { font-size: 14px; }
+
+    /* Full-width buttons on mobile */
+    .btn-primary { width: 100%; }
+    .btn-ok { width: 100%; }
+  }
+
+  @media (max-width: 380px) {
+    .form-grid-2 { grid-template-columns: 1fr; }
+    .form-grid-3 { grid-template-columns: 1fr; }
+    .form-grid-4 { grid-template-columns: 1fr; }
+    .spool-grid  { grid-template-columns: 1fr; }
+    .page-title  { font-size: 24px; }
+  }
+
+  /* ── DESKTOP: restore original spacing ─────── */
+  @media (min-width: 769px) {
+    body { padding-bottom: 0; }
+    .page { padding: 32px 24px; }
+    .page-title { font-size: 42px; }
+    .two-col { grid-template-columns: 1fr 1fr; }
+    .form-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .settings-grid { grid-template-columns: 1fr 1fr; }
+    .spool-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    .btn-primary, .btn-ok { width: auto; }
+    .btn-big { width: auto; padding: 14px 36px; }
+    #toast { left: 24px; right: auto; bottom: 24px; }
+  }
 </style>
 </head>
 <body>
 
+<!-- TOP BAR -->
 <div id="topbar">
   <div class="brand">
     <div>⬡</div>
     Tabaqa 3D
   </div>
-  <nav>
+  <!-- Desktop nav only -->
+  <nav class="desktop-nav">
     <button onclick="showPage('calc')" id="nav-calc" class="active">الحاسبة</button>
     <button onclick="showPage('stash')" id="nav-stash">المخزون</button>
     <button onclick="showPage('settings')" id="nav-settings">الإعدادات</button>
   </nav>
 </div>
 
+<!-- CALC PAGE -->
 <div id="page-calc" class="page active">
   <div class="page-title">حاسبة <span>التكلفة</span></div>
- <br>
+  <br>
   <div class="two-col">
     <div class="card">
       <div class="card-title">معلومات الطلب</div>
-      <div class="form-grid form-grid-2" style="margin-bottom:14px">
+      <div class="form-grid form-grid-2" style="margin-bottom:12px">
         <div class="field">
           <label>الوزن بالغرام</label>
-          <input type="number" id="c-grams" min="0" step="0.1" placeholder="مثال: 85" >
+          <input type="number" id="c-grams" min="0" step="0.1" placeholder="مثال: 85">
         </div>
         <div class="field">
           <label>وزن الفشل بالغرام</label>
@@ -543,7 +566,7 @@ input[type=number] {
           <input type="number" id="c-phours" min="0" step="0.25" placeholder="مثال: 4.5">
         </div>
         <div class="field">
-          <label>ساعات العمل و التصميم</label>
+          <label>ساعات العمل والتصميم</label>
           <input type="number" id="c-lhours" min="0" step="0.25" placeholder="مثال: 1" value="0">
         </div>
         <div class="field">
@@ -555,19 +578,17 @@ input[type=number] {
           <input type="number" id="c-extra" min="0" step="0.01" placeholder="0.00" value="0">
         </div>
       </div>
-      <div class="form-grid" style="gap:10px">
+      <div class="form-grid" style="gap:8px; margin-bottom:16px">
         <div class="checkbox-row">
           <input type="checkbox" id="c-urgent">
-          <label for="c-urgent" style="color: #000000;">طلب مستعجل</label>
+          <label for="c-urgent">طلب مستعجل</label>
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="c-subtract">
-          <label for="c-subtract" style="color: #000000;">خصم الوزن من المخزون</label>
+          <label for="c-subtract">خصم الوزن من المخزون</label>
         </div>
       </div>
-      <div style="margin-top:20px">
-        <button class="btn btn-primary btn-big" onclick="calculate()" style="color: #ffffff;">⚙  حساب التكلفة</button>
-      </div>
+      <button class="btn btn-primary btn-big" onclick="calculate()" style="color:#ffffff;">⚙  حساب التكلفة</button>
     </div>
 
     <div>
@@ -589,16 +610,17 @@ input[type=number] {
   </div>
 </div>
 
+<!-- STASH PAGE -->
 <div id="page-stash" class="page">
   <div class="page-title">المخزون</div>
 
   <div class="section-divider">
-    <h2>بكرات الفيلامينت (الخيوط)</h2>
+    <h2>بكرات الفيلامينت</h2>
     <div class="tag">القسم أ</div>
   </div>
   <div class="card">
     <div class="card-title">إضافة بكرة جديدة</div>
-    <div class="form-grid form-grid-4">
+    <div class="form-grid form-grid-2">
       <div class="field">
         <label>اسم البكرة</label>
         <input type="text" id="s-name" placeholder="مثال: PLA أزرق">
@@ -616,7 +638,7 @@ input[type=number] {
         <input type="number" id="s-empty" min="0" step="1" placeholder="مثال: 250">
       </div>
     </div>
-    <div style="margin-top:14px">
+    <div style="margin-top:12px">
       <button class="btn btn-primary" onclick="addSpool()">+ إضافة بكرة</button>
     </div>
   </div>
@@ -635,12 +657,12 @@ input[type=number] {
           <label>اسم العنصر</label>
           <input type="text" id="st-name" placeholder="مثال: براغي M3 x100">
         </div>
-        <div class="field" style="max-width:120px">
+        <div class="field" style="max-width:110px">
           <label>الكمية</label>
           <input type="number" id="st-qty" min="0" step="1" placeholder="1">
         </div>
       </div>
-      <div style="margin-top:14px">
+      <div style="margin-top:12px">
         <button class="btn btn-primary" onclick="addStoreItem()">+ إضافة عنصر</button>
       </div>
     </div>
@@ -650,6 +672,7 @@ input[type=number] {
   </div>
 </div>
 
+<!-- SETTINGS PAGE -->
 <div id="page-settings" class="page">
   <div class="page-title">إعدادات <span>النظام</span></div>
   <div class="page-subtitle">// إعداد الطابعات، التكاليف ومعايير الربح</div>
@@ -678,7 +701,7 @@ input[type=number] {
           </div>
         </div>
       </div>
-      <div style="margin-top:14px">
+      <div style="margin-top:12px">
         <button class="btn btn-primary" onclick="addPrinter()">+ تسجيل طابعة</button>
       </div>
     </div>
@@ -716,17 +739,33 @@ input[type=number] {
         <input type="number" id="cfg-urgent" min="0" step="0.01" placeholder="مثال: 10.00">
       </div>
     </div>
-    <div style="margin-top:20px">
+    <div style="margin-top:16px">
       <button class="btn btn-ok" onclick="saveSettings()">💾 حفظ الإعدادات</button>
     </div>
   </div>
 </div>
 
+<!-- BOTTOM NAV (mobile only) -->
+<div id="bottom-nav">
+  <div class="nav-inner">
+    <button onclick="showPage('calc')" id="bnav-calc" class="active">
+      <span class="nav-icon">⚙️</span>
+      الحاسبة
+    </button>
+    <button onclick="showPage('stash')" id="bnav-stash">
+      <span class="nav-icon">📦</span>
+      المخزون
+    </button>
+    <button onclick="showPage('settings')" id="bnav-settings">
+      <span class="nav-icon">⚙</span>
+      الإعدادات
+    </button>
+  </div>
+</div>
+
 <div id="toast"></div>
+
 <script type="module">
-// ────────────────────────────────────────────
-//  FIREBASE SETUP & IMPORTS
-// ────────────────────────────────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -744,12 +783,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const dbRef = ref(db, 'printforge_v1');
 
-// ────────────────────────────────────────────
-//  STATE (مع دعم ترحيل البيانات القديمة)
-// ────────────────────────────────────────────
-function uid() {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
 
 const DEFAULT_STATE = {
   spools: [],
@@ -767,10 +801,7 @@ const DEFAULT_STATE = {
 };
 
 function loadState() {
-  try {
-    const raw = localStorage.getItem('printforge_v1');
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
+  try { const raw = localStorage.getItem('printforge_v1'); if (raw) return JSON.parse(raw); } catch(e) {}
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
 }
 
@@ -781,9 +812,6 @@ function saveState() {
   set(dbRef, state).catch(e => console.error("Firebase Error:", e));
 }
 
-// ────────────────────────────────────────────
-//  FIREBASE SYNC LISTENER
-// ────────────────────────────────────────────
 let isFirstLoad = true;
 onValue(dbRef, (snapshot) => {
   const data = snapshot.val();
@@ -792,35 +820,32 @@ onValue(dbRef, (snapshot) => {
     if (!state.spools) state.spools = [];
     if (!state.storeStash) state.storeStash = [];
     if (!state.printers) state.printers = [];
-    
     renderAll();
-    
-    if (isFirstLoad) { 
-      toast('☁️ تم الربط والمزامنة مع السحاب'); 
-      isFirstLoad = false; 
-    }
-  } else {
-    saveState();
-  }
+    if (isFirstLoad) { toast('☁️ تم الربط والمزامنة مع السحاب'); isFirstLoad = false; }
+  } else { saveState(); }
 });
 
 function renderAll() {
-  renderSpools();
-  renderStoreStash();
-  renderPrinters();
-  populateDropdowns();
-  loadSettingsForm();
+  renderSpools(); renderStoreStash(); renderPrinters();
+  populateDropdowns(); loadSettingsForm();
 }
-
-// ────────────────────────────────────────────
-//  الكود الأصلي الخاص بك (بدون أي تعديل)
-// ────────────────────────────────────────────
 
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('nav.desktop-nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#bottom-nav button').forEach(b => b.classList.remove('active'));
+
   document.getElementById('page-' + id).classList.add('active');
-  document.getElementById('nav-' + id).classList.add('active');
+
+  const desktopBtn = document.getElementById('nav-' + id);
+  if (desktopBtn) desktopBtn.classList.add('active');
+
+  const mobileBtn = document.getElementById('bnav-' + id);
+  if (mobileBtn) mobileBtn.classList.add('active');
+
+  // Scroll to top on page switch (mobile)
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   if (id === 'stash') renderStash();
   if (id === 'settings') renderSettings();
   if (id === 'calc') populateDropdowns();
@@ -829,10 +854,8 @@ function showPage(id) {
 let toastTimer;
 function toast(msg, color = 'var(--ok)') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.style.color = color;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
+  el.textContent = msg; el.style.color = color;
+  el.classList.add('show'); clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
@@ -841,36 +864,24 @@ function addSpool() {
   const ppkg  = parseFloat(val('s-ppkg'));
   const grams = parseFloat(val('s-grams'));
   const empty = parseFloat(val('s-empty')) || 0;
-
   if (!name || isNaN(ppkg) || isNaN(grams)) {
     toast('يرجى تعبئة الاسم، السعر لكل كيلوغرام، والغرامات المتبقية', 'var(--warn)'); return;
   }
   state.spools.push({ id: uid(), name, pricePerKg: ppkg, gramsLeft: grams, emptySpoolWeight: empty });
-  saveState();
-  clearInputs(['s-name','s-ppkg','s-grams','s-empty']);
-  renderSpools();
-  populateDropdowns();
-  toast('✓ تمت إضافة البكرة');
+  saveState(); clearInputs(['s-name','s-ppkg','s-grams','s-empty']);
+  renderSpools(); populateDropdowns(); toast('✓ تمت إضافة البكرة');
 }
 
 function deleteSpool(id) {
   state.spools = state.spools.filter(s => s.id !== id);
-  saveState();
-  renderSpools();
-  populateDropdowns();
+  saveState(); renderSpools(); populateDropdowns();
   toast('تمت إزالة البكرة', 'var(--warn)');
 }
 
 function renderSpools() {
   const grid = document.getElementById('spool-grid');
-  if (!state.spools.length) {
-    grid.innerHTML = '<div class="empty-state">لا توجد بكرات مسجلة بعد</div>';
-    return;
-  }
+  if (!state.spools.length) { grid.innerHTML = '<div class="empty-state">لا توجد بكرات مسجلة بعد</div>'; return; }
   grid.innerHTML = state.spools.map(spool => {
-    const maxG = spool.gramsLeft + spool.emptySpoolWeight;
-    const fillable = spool.gramsLeft + (spool.emptySpoolWeight || 0);
-    const pct = maxG > 0 ? Math.max(0, Math.min(100, (spool.gramsLeft / (maxG - (spool.emptySpoolWeight||0) || maxG)) * 100)) : 0;
     const rawPct = spool.gramsLeft <= 0 ? 0 : Math.min(100, (spool.gramsLeft / 1000) * 100);
     let cls = 'ok', barColor = 'var(--ok)';
     if (spool.gramsLeft <= 0) { cls = 'empty'; barColor = 'var(--danger)'; }
@@ -896,40 +907,30 @@ function addStoreItem() {
   const qty  = parseInt(val('st-qty')) || 1;
   if (!name) { toast('أدخل اسم العنصر', 'var(--warn)'); return; }
   state.storeStash.push({ id: uid(), itemName: name, quantity: qty });
-  saveState();
-  clearInputs(['st-name','st-qty']);
-  renderStoreStash();
-  toast('✓ تمت إضافة العنصر للمخزون');
+  saveState(); clearInputs(['st-name','st-qty']);
+  renderStoreStash(); toast('✓ تمت إضافة العنصر للمخزون');
 }
 
 function deleteStoreItem(id) {
   state.storeStash = state.storeStash.filter(i => i.id !== id);
-  saveState();
-  renderStoreStash();
-  toast('تمت إزالة العنصر', 'var(--warn)');
+  saveState(); renderStoreStash(); toast('تمت إزالة العنصر', 'var(--warn)');
 }
 
 function updateStoreItemQty(id, amount) {
   const item = state.storeStash.find(i => i.id === id);
   if (item) {
     item.quantity += amount;
-    if (item.quantity < 0) item.quantity = 0; 
-    saveState();
-    renderStoreStash();
+    if (item.quantity < 0) item.quantity = 0;
+    saveState(); renderStoreStash();
   }
 }
 
 function renderStoreStash() {
   const el = document.getElementById('stash-list');
-  if (!state.storeStash.length) {
-    el.innerHTML = '<div class="empty-state">مخزون المتجر فارغ</div>';
-    return;
-  }
+  if (!state.storeStash.length) { el.innerHTML = '<div class="empty-state">مخزون المتجر فارغ</div>'; return; }
   el.innerHTML = state.storeStash.map(item => `
     <div class="stash-item">
-      <div>
-        <div class="stash-item-name">${esc(item.itemName)}</div>
-      </div>
+      <div class="stash-item-name">${esc(item.itemName)}</div>
       <div class="stash-item-actions">
         <button class="btn-qty" onclick="updateStoreItemQty('${item.id}', -1)">-</button>
         <span class="stash-item-qty">الكمية: ${item.quantity}</span>
@@ -947,27 +948,19 @@ function addPrinter() {
   const rate  = parseFloat(val('p-rate')) || 0;
   if (!name) { toast('أدخل اسم الطابعة', 'var(--warn)'); return; }
   state.printers.push({ id: uid(), name, purchasePrice: price, hourlyRate: rate });
-  saveState();
-  clearInputs(['p-name','p-price','p-rate']);
-  renderPrinters();
-  populateDropdowns();
-  toast('✓ تم تسجيل الطابعة');
+  saveState(); clearInputs(['p-name','p-price','p-rate']);
+  renderPrinters(); populateDropdowns(); toast('✓ تم تسجيل الطابعة');
 }
 
 function deletePrinter(id) {
   state.printers = state.printers.filter(p => p.id !== id);
-  saveState();
-  renderPrinters();
-  populateDropdowns();
+  saveState(); renderPrinters(); populateDropdowns();
   toast('تمت إزالة الطابعة', 'var(--warn)');
 }
 
 function renderPrinters() {
   const el = document.getElementById('printer-list');
-  if (!state.printers.length) {
-    el.innerHTML = '<div class="empty-state">لا توجد طابعات مسجلة</div>';
-    return;
-  }
+  if (!state.printers.length) { el.innerHTML = '<div class="empty-state">لا توجد طابعات مسجلة</div>'; return; }
   el.innerHTML = state.printers.map(p => `
     <div class="printer-item">
       <div>
@@ -998,29 +991,22 @@ function saveSettings() {
     profitPerHour:           parseFloat(val('cfg-phour')) || 0,
     urgentFee:               parseFloat(val('cfg-urgent'))|| 0,
   };
-  saveState();
-  toast('✓ تم حفظ الإعدادات');
+  saveState(); toast('✓ تم حفظ الإعدادات');
 }
 
-function renderSettings() {
-  loadSettingsForm();
-  renderPrinters();
-}
+function renderSettings() { loadSettingsForm(); renderPrinters(); }
 
 function populateDropdowns() {
   const spoolSel   = document.getElementById('c-spool');
   const printerSel = document.getElementById('c-printer');
-
   const spoolVal   = spoolSel.value;
   const printerVal = printerSel.value;
-
   spoolSel.innerHTML = state.spools.length
-    ? state.spools.map(s => `<option value="${s.id}" ${s.id===spoolVal?'selected':''}>${esc(s.name)} (${s.gramsLeft}g متبقي)</option>`).join('')
-    : '<option value="">— لا توجد بكرات مسجلة —</option>';
-
+    ? state.spools.map(s => `<option value="${s.id}" ${s.id===spoolVal?'selected':''}>${esc(s.name)} (${s.gramsLeft}g)</option>`).join('')
+    : '<option value="">— لا توجد بكرات —</option>';
   printerSel.innerHTML = state.printers.length
     ? state.printers.map(p => `<option value="${p.id}" ${p.id===printerVal?'selected':''}>${esc(p.name)}</option>`).join('')
-    : '<option value="">— لا توجد طابعات مسجلة —</option>';
+    : '<option value="">— لا توجد طابعات —</option>';
 }
 
 function calculate() {
@@ -1043,24 +1029,22 @@ function calculate() {
   const printer = state.printers.find(p => p.id === printerId);
   const cfg     = state.settings;
 
-  const totalGrams     = printG + failedG;
-  const ppg            = spool.pricePerKg / 1000;
-  const plasticCost    = totalGrams * ppg;
-  const elecCost       = pHours * cfg.electricityPricePerHour;
-  const printerCost    = pHours * printer.hourlyRate;
-  const laborCost      = lHours * cfg.laborPricePerHour;
-  const profitMargin   = (totalGrams * cfg.profitPerGram) + (pHours * cfg.profitPerHour);
-  const urgentCost     = urgent ? cfg.urgentFee : 0;
-  const grandTotal     = plasticCost + elecCost + printerCost + laborCost + otherC + urgentCost + extraF + profitMargin;
+  const totalGrams   = printG + failedG;
+  const ppg          = spool.pricePerKg / 1000;
+  const plasticCost  = totalGrams * ppg;
+  const elecCost     = pHours * cfg.electricityPricePerHour;
+  const printerCost  = pHours * printer.hourlyRate;
+  const laborCost    = lHours * cfg.laborPricePerHour;
+  const profitMargin = (totalGrams * cfg.profitPerGram) + (pHours * cfg.profitPerHour);
+  const urgentCost   = urgent ? cfg.urgentFee : 0;
+  const grandTotal   = plasticCost + elecCost + printerCost + laborCost + otherC + urgentCost + extraF + profitMargin;
 
   let noteMsg = '';
   if (subtractGrams) {
     const idx = state.spools.findIndex(s => s.id === spoolId);
     if (idx >= 0) {
       state.spools[idx].gramsLeft -= totalGrams;
-      saveState();
-      renderSpools();
-      populateDropdowns();
+      saveState(); renderSpools(); populateDropdowns();
       const remaining = state.spools[idx].gramsLeft;
       noteMsg = remaining < 0
         ? `⚠ البكرة "${spool.name}" نفدت (${remaining}g). يرجى إعادة التزويد!`
@@ -1069,15 +1053,15 @@ function calculate() {
   }
 
   const lines = [
-    { label: 'إجمالي الغرامات',            value: `${totalGrams}g`,          sub: true },
-    { label: 'تكلفة البلاستيك',            value: `${ppg.toFixed(4)} / غ × ${totalGrams}g`, amount: plasticCost },
-    { label: 'تكلفة الكهرباء',        value: `${fmt(cfg.electricityPricePerHour)} / ساعة × ${pHours}س`, amount: elecCost },
-    { label: `الطابعة: ${printer.name}`,value: `${fmt(printer.hourlyRate)} / ساعة × ${pHours}س`, amount: printerCost },
-    { label: 'تكلفة الجهد',              value: `${fmt(cfg.laborPricePerHour)} / ساعة × ${lHours}س`, amount: laborCost },
-    { label: 'مواد أخرى',         value: '—', amount: otherC },
-    { label: 'رسوم الاستعجال',             value: urgent ? 'مُطبقة' : 'لا يوجد', amount: urgentCost, skip: !urgent && urgentCost===0 },
-    { label: 'رسوم إضافية',               value: extraF>0 ? '—' : 'لا يوجد', amount: extraF, skip: extraF===0 },
-    { label: 'هامش الربح',           value: `${totalGrams}g × ${fmt(cfg.profitPerGram)} + ${pHours}س × ${fmt(cfg.profitPerHour)}`, amount: profitMargin },
+    { label: 'إجمالي الغرامات',          value: `${totalGrams}g`,          sub: true },
+    { label: 'تكلفة البلاستيك',          value: `${ppg.toFixed(4)}/غ × ${totalGrams}g`, amount: plasticCost },
+    { label: 'تكلفة الكهرباء',           value: `${fmt(cfg.electricityPricePerHour)}/س × ${pHours}س`, amount: elecCost },
+    { label: `الطابعة: ${printer.name}`, value: `${fmt(printer.hourlyRate)}/س × ${pHours}س`, amount: printerCost },
+    { label: 'تكلفة الجهد',              value: `${fmt(cfg.laborPricePerHour)}/س × ${lHours}س`, amount: laborCost },
+    { label: 'مواد أخرى',               value: '—', amount: otherC },
+    { label: 'رسوم الاستعجال',           value: urgent ? 'مُطبقة' : 'لا يوجد', amount: urgentCost, skip: !urgent && urgentCost===0 },
+    { label: 'رسوم إضافية',             value: extraF>0 ? '—' : 'لا يوجد', amount: extraF, skip: extraF===0 },
+    { label: 'هامش الربح',              value: `${totalGrams}g × ${fmt(cfg.profitPerGram)} + ${pHours}س × ${fmt(cfg.profitPerHour)}`, amount: profitMargin },
   ];
 
   const now = new Date();
@@ -1110,15 +1094,20 @@ function calculate() {
 
   const noteEl = document.getElementById('invoice-note');
   if (noteMsg) {
-    noteEl.textContent = noteMsg;
-    noteEl.style.display = '';
+    noteEl.textContent = noteMsg; noteEl.style.display = '';
     noteEl.style.color = noteMsg.includes('⚠') ? 'var(--warn)' : 'var(--ok)';
-  } else {
-    noteEl.style.display = 'none';
-  }
+  } else { noteEl.style.display = 'none'; }
 
   document.getElementById('invoice-section').classList.add('visible');
   document.getElementById('invoice-placeholder').style.display = 'none';
+
+  // On mobile, scroll to invoice after calculation
+  if (window.innerWidth < 769) {
+    setTimeout(() => {
+      document.getElementById('invoice-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  }
+
   toast('✓ اكتمل الحساب');
 }
 
@@ -1126,15 +1115,8 @@ function val(id) { return document.getElementById(id).value.trim(); }
 function setVal(id, v) { document.getElementById(id).value = v ?? ''; }
 function clearInputs(ids) { ids.forEach(id => setVal(id, '')); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmt(n) { const abs = Math.abs(+n || 0).toFixed(2); return (n < 0 ? '-' : '') + abs; }
 
-function fmt(n) {
-  const abs = Math.abs(+n || 0).toFixed(2);
-  return (n < 0 ? '-' : '') + abs;
-}
-
-// ────────────────────────────────────────────
-//  ربط الدوال لتكون مرئية لملف الـ HTML
-// ────────────────────────────────────────────
 window.showPage = showPage;
 window.addSpool = addSpool;
 window.deleteSpool = deleteSpool;
@@ -1146,12 +1128,7 @@ window.deletePrinter = deletePrinter;
 window.saveSettings = saveSettings;
 window.calculate = calculate;
 
-// ────────────────────────────────────────────
-//  التشغيل الأولي
-// ────────────────────────────────────────────
-(function init() {
-  renderAll();
-})();
+(function init() { renderAll(); })();
 </script>
 </body>
 </html>
