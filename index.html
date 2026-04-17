@@ -259,6 +259,31 @@
     letter-spacing: 1px;
   }
 
+/* تنسيق أزرار الزيادة والنقصان */
+.btn-qty {
+  background: var(--bg2); /* خلفية بيضاء لتكون واضحة */
+  color: var(--text2); /* لون الخط أسود */
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0px 8px;
+  font-family: var(--head);
+  font-size: 18px;
+  font-weight: bold;
+  min-width: 32px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.btn-qty:hover {
+  background: var(--accent2); /* يتغير لونه عند التمرير عليه */
+  color: #ffffff;
+  border-color: var(--accent2);
+}
+  
   /* ── SPOOL GRID ──────────────────────────────── */
   .spool-grid {
     display: grid;
@@ -386,9 +411,9 @@
     font-size: 14px;
   }
   .invoice-line:last-child { border-bottom: none; }
-  .invoice-line-label { color: var(--text2); font-family: var(--head); font-weight: 600; font-size: 14px; }
-  .invoice-line-value { font-family: var(--mono); font-size: 14px; color: var(--text); }
-  .invoice-line.subtotal .invoice-line-label { color: var(--text); font-weight: 800; font-size: 16px; }
+  .invoice-line-label { color: #007ff0; font-family: var(--head); font-weight: 600; font-size: 14px; }
+  .invoice-line-value { font-family: var(--mono); font-size: 14px; color: #007ff0; }
+  .invoice-line.subtotal .invoice-line-label { color:#007ff0; font-weight: 800; font-size: 16px; }
   .invoice-line.total-line {
     background: rgba(255,107,26,0.05);
     margin: 0 -28px; padding: 18px 28px;
@@ -864,11 +889,11 @@ function renderStoreStash() {
         <div class="stash-item-name">${esc(item.itemName)}</div>
       </div>
       <div class="stash-item-actions">
-        <button class="btn btn-ghost" style="padding: 2px 8px; font-size: 16px; min-width: 30px;" onclick="updateStoreItemQty('${item.id}', -1)">-</button>
+        <button class="btn-qty" onclick="updateStoreItemQty('${item.id}', -1)">-</button>
         
         <span class="stash-item-qty">الكمية: ${item.quantity}</span>
         
-        <button class="btn btn-ghost" style="padding: 2px 8px; font-size: 14px; min-width: 30px;" onclick="updateStoreItemQty('${item.id}', 1)">+</button>
+        <button class="btn-qty" onclick="updateStoreItemQty('${item.id}', 1)">+</button>
         
         <button class="btn btn-danger" onclick="deleteStoreItem('${item.id}')">✕</button>
       </div>
