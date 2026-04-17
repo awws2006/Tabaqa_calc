@@ -386,7 +386,7 @@
   }
   .invoice-note::before { content: '✓'; }
 
-  /* ── TOAST ───────────────────────────────────── */
+/* ── TOAST ───────────────────────────────────── */
   #toast {
     position: fixed; bottom: calc(80px + var(--safe-bottom)); left: 16px; right: 16px;
     background: var(--bg3); border: 1px solid var(--border2);
@@ -396,9 +396,8 @@
     transform: translateY(80px); opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease;
     z-index: 9999; text-align: center;
+    pointer-events: none; /* <--- هذا هو السطر السحري الذي سيحل المشكلة */
   }
-  #toast.show { transform: translateY(0); opacity: 1; }
-
   /* ── EMPTY STATES ────────────────────────────── */
   .empty-state {
     text-align: center; padding: 24px 12px;
