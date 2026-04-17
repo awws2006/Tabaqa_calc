@@ -104,39 +104,6 @@
   nav.desktop-nav button.active { color: var(--accent); }
   nav.desktop-nav button.active::after { width: 60%; }
 
-  /* ── BOTTOM MOBILE NAV ──────────────────────── */
-  #bottom-nav {
-    display: none;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 200;
-    background: var(--bg2);
-    border-top: 1px solid var(--border);
-    padding-bottom: var(--safe-bottom);
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-  }
-  #bottom-nav .nav-inner {
-    display: flex;
-    height: 64px;
-  }
-  #bottom-nav button {
-    flex: 1;
-    background: none; border: none; cursor: pointer;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 4px;
-    font-family: var(--head); font-weight: 700;
-    font-size: 11px; letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--text2);
-    transition: color var(--transition);
-    -webkit-tap-highlight-color: transparent;
-    padding: 0;
-    touch-action: manipulation;
-  }
-  #bottom-nav button .nav-icon { font-size: 22px; line-height: 1; }
-  #bottom-nav button.active { color: var(--accent); }
-  #bottom-nav button.active .nav-icon { transform: scale(1.1); }
-
   /* ── LAYOUT ──────────────────────────────────── */
   .page { display: none; padding: 24px 16px; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.25s ease; }
   .page.active { display: block; }
@@ -386,7 +353,41 @@
   }
   .invoice-note::before { content: '✓'; }
 
-/* ── TOAST ───────────────────────────────────── */
+/* ── BOTTOM MOBILE NAV (علاج جذري للمس) ──────── */
+  #bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 999999; /* رفعناه لأعلى طبقة ممكنة في المتصفح */
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding-bottom: var(--safe-bottom);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+  }
+  #bottom-nav .nav-inner {
+    display: flex;
+    height: 64px;
+  }
+  #bottom-nav button {
+    flex: 1;
+    background: transparent; border: none; cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    font-family: var(--head); font-weight: 700;
+    font-size: 11px; letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    transition: color 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    touch-action: manipulation;
+    pointer-events: auto !important; /* إجبار المتصفح على قراءة اللمس هنا */
+  }
+  #bottom-nav button .nav-icon { font-size: 22px; line-height: 1; }
+  #bottom-nav button.active { color: var(--accent); }
+  #bottom-nav button.active .nav-icon { transform: scale(1.1); }
+
+  /* ── TOAST ───────────────────────────────────── */
   #toast {
     position: fixed; bottom: calc(80px + var(--safe-bottom)); left: 16px; right: 16px;
     background: var(--bg3); border: 1px solid var(--border2);
@@ -395,9 +396,10 @@
     color: var(--ok); box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     transform: translateY(80px); opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease;
-    z-index: 9999; text-align: center;
-    pointer-events: none; /* <--- هذا هو السطر السحري الذي سيحل المشكلة */
+    z-index: 9000; text-align: center;
+    pointer-events: none !important; /* منع الإشعار من حجب اللمس نهائياً */
   }
+  #toast.show { transform: translateY(0); opacity: 1; }
   /* ── EMPTY STATES ────────────────────────────── */
   .empty-state {
     text-align: center; padding: 24px 12px;
